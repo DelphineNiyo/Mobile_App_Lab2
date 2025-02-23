@@ -1,0 +1,22 @@
+name: contact_management_app
+description: A simple contact management application in Flutter.
+
+publish_to: "none"
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  http: ^0.13.6  # Required for making API requests
+  provider: ^6.0.5  # Optional: For state management (if needed)
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
