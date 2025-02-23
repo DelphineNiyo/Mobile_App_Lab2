@@ -11,26 +11,44 @@ class AddContactScreen extends StatefulWidget {
 class _AddContactScreenState extends State<AddContactScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
+  bool _isLoading = false;
+  String _message = "";
+  bool _contactAdded = false; // Track if contact was added
 
   void _saveContact() async {
     String name = _nameController.text.trim();
     String phone = _phoneController.text.trim();
 
     if (name.isEmpty || phone.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please fill in all fields")),
-      );
+      setState(() {
+        _message = "Please fill in all fields";
+      });
       return;
     }
 
+    setState(() {
+      _isLoading = true;
+      _message = "";
+    });
+
     String result = await ContactService.addContact(name, phone);
 
-    if (result == "success") {
-      Navigator.pop(context, {"name": name, "phone": phone});
+    setState(() {
+      _isLoading = false;
+      if (result == "success") {
+        _message = "Contact added successfully!";
+        _contactAdded = true; // Set flag to true
+      } else {
+        _message = "Failed to add contact. Please try again.";
+      }
+    });
+  }
+
+  void _goBack() {
+    if (_contactAdded) {
+      Navigator.pop(context, {"name": _nameController.text, "phone": _phoneController.text});
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Failed to add contact.")),
-      );
+      Navigator.pop(context);
     }
   }
 
@@ -41,6 +59,7 @@ class _AddContactScreenState extends State<AddContactScreen> {
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             TextField(
               controller: _nameController,
@@ -53,9 +72,19 @@ class _AddContactScreenState extends State<AddContactScreen> {
               keyboardType: TextInputType.phone,
             ),
             const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _saveContact,
-              child: const Text('Save Contact'),
+            _isLoading
+                ? const CircularProgressIndicator()
+                : ElevatedButton(
+                    onPressed: _saveContact,
+                    child: const Text('Save Contact'),
+                  ),
+            const SizedBox(height: 10),
+            Text(
+              _message,
+              style: TextStyle(
+                color: _message.contains("successfully") ? Colors.green : Colors.red,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ],
         ),

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/contact_service.dart';
 import 'edit_contact.dart';
-import 'add_contact.dart';
 
 class ContactsListScreen extends StatefulWidget {
   const ContactsListScreen({super.key});
@@ -20,7 +19,6 @@ class _ContactsListScreenState extends State<ContactsListScreen> {
     _fetchContacts();
   }
 
-  // Fetch all contacts from API
   void _fetchContacts() async {
     List<Map<String, dynamic>> contacts = await ContactService.fetchAllContacts();
     setState(() {
@@ -29,13 +27,45 @@ class _ContactsListScreenState extends State<ContactsListScreen> {
     });
   }
 
-  // Delete a contact
+  void _showDeleteConfirmation(BuildContext context, String id) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Confirm Delete"),
+        content: const Text("Are you sure you want to delete this contact?"),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              _deleteContact(id);
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text("Delete", style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _deleteContact(String id) async {
     bool success = await ContactService.deleteContact(id);
     if (success) {
       setState(() {
         _contacts.removeWhere((contact) => contact["id"] == id);
       });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Contact deleted successfully!")),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Failed to delete contact.")),
+      );
     }
   }
 
@@ -83,7 +113,10 @@ class _ContactsListScreenState extends State<ContactsListScreen> {
                             IconButton(
                               icon: const Icon(Icons.delete, color: Colors.red),
                               onPressed: () {
-                                _deleteContact(_contacts[index]["id"].toString());
+                                _showDeleteConfirmation(
+                                  context,
+                                  _contacts[index]["id"].toString(),
+                                );
                               },
                             ),
                           ],
@@ -92,21 +125,6 @@ class _ContactsListScreenState extends State<ContactsListScreen> {
                     );
                   },
                 ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          final newContact = await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const AddContactScreen()),
-          );
-
-          if (newContact != null) {
-            setState(() {
-              _contacts.add(newContact);
-            });
-          }
-        },
-        child: const Icon(Icons.add),
-      ),
     );
   }
 }
